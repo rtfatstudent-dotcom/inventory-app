@@ -185,3 +185,7 @@ Thumbs.db
 - ✅ Color-coded quantity badges (low stock warning)
 - ✅ Each user sees only their own inventory
 - ✅ Responsive dark UI
+
+
+## GitHub Repository
+https://github.com/rtfatstudent-dotcom/inventory-app

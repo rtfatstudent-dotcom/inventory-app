@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockSense — Inventory Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & VARIABLES ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0b0f1a;
+      --surface:   #111827;
+      --surface2:  #1a2235;
+      --border:    #1f2d45;
+      --accent:    #3b82f6;
+      --accent2:   #60a5fa;
+      --green:     #10b981;
+      --red:       #ef4444;
+      --yellow:    #f59e0b;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --radius:    12px;
+      --shadow:    0 4px 24px rgba(0,0,0,.45);
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── AUTH SCREEN ───────────────────────────────────── */
+    #auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 20%, rgba(59,130,246,.13) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 20% 80%, rgba(16,185,129,.08) 0%, transparent 55%),
+        var(--bg);
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 44px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: var(--shadow);
+      animation: fadeUp .5s ease both;
+    }
+
+    .auth-logo {
+      font-family: var(--font-head);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 6px;
+    }
+    .auth-logo span { color: var(--accent); }
+
+    .auth-tagline {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+
+    .tab-row {
+      display: flex;
+      gap: 4px;
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      background: transparent;
+      color: var(--muted);
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--accent);
+    }
+    .form-group textarea { resize: vertical; min-height: 72px; }
+    .form-group select option { background: var(--surface2); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 11px 20px;
+      border: none;
+      border-radius: 9px;
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; width: 100%; margin-top: 4px; }
+    .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+    .btn-sm { padding: 7px 13px; font-size: 12px; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover { background: #059669; }
+    .btn-red { background: transparent; color: var(--red); border: 1px solid var(--red); }
+    .btn-red:hover { background: var(--red); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .alert {
+      padding: 11px 14px;
+      border-radius: 9px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alert.show { display: block; animation: fadeUp .3s ease; }
+    .alert-error   { background: rgba(239,68,68,.12);  border: 1px solid rgba(239,68,68,.3);  color: #fca5a5; }
+    .alert-success { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.3); color: #6ee7b7; }
+
+    /* ── DASHBOARD ─────────────────────────────────────── */
+    #dashboard { display: none; min-height: 100vh; flex-direction: column; }
+    #dashboard.visible { display: flex; }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-logo {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .topbar-logo span { color: var(--accent); }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 5px 14px 5px 5px;
+    }
+    .avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .user-name { font-size: 13px; font-weight: 500; }
+
+    .main-content { flex: 1; padding: 28px; max-width: 1200px; width: 100%; margin: 0 auto; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      animation: fadeUp .4s ease both;
+    }
+    .stat-card:nth-child(2) { animation-delay: .07s; }
+    .stat-card:nth-child(3) { animation-delay: .14s; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+    .stat-value { font-family: var(--font-head); font-size: 30px; font-weight: 800; }
+    .stat-value.blue   { color: var(--accent2); }
+    .stat-value.green  { color: var(--green); }
+    .stat-value.yellow { color: var(--yellow); }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+    }
+    .search-input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+
+    .filter-select {
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-select option { background: var(--surface); }
+
+    /* Table */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--surface2); }
+    th {
+      padding: 13px 16px;
+      font-family: var(--font-head);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+      text-align: left;
+    }
+    td { padding: 13px 16px; font-size: 13.5px; border-top: 1px solid var(--border); vertical-align: middle; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .empty-row td { text-align: center; padding: 48px; color: var(--muted); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+    .badge-blue   { background: rgba(59,130,246,.15);  color: var(--accent2); }
+    .badge-green  { background: rgba(16,185,129,.15);  color: var(--green);   }
+    .badge-yellow { background: rgba(245,158,11,.15);  color: var(--yellow);  }
+    .badge-red    { background: rgba(239,68,68,.15);   color: var(--red);     }
+    .badge-purple { background: rgba(168,85,247,.15);  color: #c084fc;        }
+
+    .qty-badge {
+      font-family: var(--font-head);
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .qty-ok   { background: rgba(16,185,129,.12); color: var(--green); }
+    .qty-low  { background: rgba(245,158,11,.12); color: var(--yellow); }
+    .qty-zero { background: rgba(239,68,68,.12);  color: var(--red);   }
+
+    .action-row { display: flex; gap: 6px; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 36px 36px 28px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: var(--shadow);
+      transform: translateY(20px);
+      transition: transform .3s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-title { font-family: var(--font-head); font-size: 20px; font-weight: 700; }
+    .modal-close {
+      width: 32px; height: 32px;
+      border: none; border-radius: 8px;
+      background: var(--surface2);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+    }
+    .modal-close:hover { background: var(--red); color: #fff; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .modal-actions .btn { flex: 1; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--green);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13px;
+      min-width: 240px;
+      box-shadow: var(--shadow);
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-left-color: var(--red); }
+
+    /* Loading spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+    }
+    .loading .spinner { display: block; }
+    .loading .btn-text { display: none; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .auth-card  { padding: 32px 24px; margin: 16px; }
+      .form-row   { grid-template-columns: 1fr; }
+      .main-content { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Stock<span>Sense</span></div>
+    <p class="auth-tagline">Smart inventory management for your business</p>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn"        onclick="switchTab('register')">Register</button>
+    </div>
+
+    <div id="auth-alert" class="alert"></div>
+
+    <!-- Login Form -->
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" required />
+      </div>
+      <button class="btn btn-primary" type="submit" id="login-btn">
+        <div class="spinner"></div>
+        <span class="btn-text">Sign In</span>
+      </button>
+    </form>
+
+    <!-- Register Form -->
+    <form id="register-form" style="display:none;" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="reg-name" placeholder="Juan Dela Cruz" required />
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label>Password <span style="color:var(--muted)">(min 6 characters)</span></label>
+        <input type="password" id="reg-password" placeholder="••••••••" required />
+      </div>
+      <button class="btn btn-primary" type="submit" id="reg-btn">
+        <div class="spinner"></div>
+        <span class="btn-text">Create Account</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     DASHBOARD
+═══════════════════════════════════════════════════════ -->
+<div id="dashboard">
+  <nav class="topbar">
+    <div class="topbar-logo">Stock<span>Sense</span></div>
+    <div class="topbar-right">
+      <div class="user-badge">
+        <div class="avatar" id="user-avatar">?</div>
+        <span class="user-name" id="user-name-display">User</span>
+      </div>
+      <button class="btn btn-sm btn-outline" onclick="handleLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Products</div>
+        <div class="stat-value blue" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Units in Stock</div>
+        <div class="stat-value green" id="stat-qty">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Inventory Value</div>
+        <div class="stat-value yellow" id="stat-value">—</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search-input" id="search-input" placeholder="Search products…" oninput="loadProducts()" />
+      </div>
+      <select class="filter-select" id="cat-filter" onchange="loadProducts()">
+        <option value="">All Categories</option>
+        <option>Electronics</option>
+        <option>Clothing</option>
+        <option>Food & Beverage</option>
+        <option>Office Supplies</option>
+        <option>Tools & Hardware</option>
+        <option>Health & Beauty</option>
+        <option>Other</option>
+      </select>
+      <button class="btn btn-green" onclick="openModal()">+ Add Product</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Total Value</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="products-tbody">
+          <tr class="empty-row"><td colspan="7">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     ADD / EDIT MODAL
+═══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Add Product</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-alert" class="alert"></div>
+    <form onsubmit="handleSaveProduct(event)">
+      <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" id="p-name" placeholder="e.g. Wireless Mouse" required />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="p-category" required>
+            <option value="">Select…</option>
+            <option>Electronics</option>
+            <option>Clothing</option>
+            <option>Food & Beverage</option>
+            <option>Office Supplies</option>
+            <option>Tools & Hardware</option>
+            <option>Health & Beauty</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quantity</label>
+          <input type="number" id="p-qty" min="0" value="0" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Unit Price (₱)</label>
+        <input type="number" id="p-price" min="0" step="0.01" value="0.00" required />
+      </div>
+      <div class="form-group">
+        <label>Description <span style="color:var(--muted)">(optional)</span></label>
+        <textarea id="p-desc" placeholder="Brief product description…"></textarea>
+      </div>
+      <input type="hidden" id="p-id" value="" />
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="save-btn">
+          <div class="spinner"></div>
+          <span class="btn-text">Save Product</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────
+const API_AUTH     = 'api/auth.php';
+const API_PRODUCTS = 'api/products.php';
+
+let currentUser = null;
+
+// ── AUTH TAB SWITCH ───────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) =>
+    b.classList.toggle('active', (tab === 'login' ? i === 0 : i === 1))
+  );
+  document.getElementById('login-form').style.display    = tab === 'login'    ? '' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+  hideAlert('auth-alert');
+}
+
+// ── ALERTS ────────────────────────────────────────────────
+function showAlert(id, msg, type = 'error') {
+  const el = document.getElementById(id);
+  el.className = `alert alert-${type} show`;
+  el.textContent = msg;
+}
+function hideAlert(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── LOADING STATE ─────────────────────────────────────────
+function setLoading(btnId, on) {
+  document.getElementById(btnId).classList.toggle('loading', on);
+}
+
+// ── LOGIN ─────────────────────────────────────────────────
+async function handleLogin(e) {
+  e.preventDefault();
+  hideAlert('auth-alert');
+  setLoading('login-btn', true);
+
+  const res = await post(API_AUTH, {
+    action:   'login',
+    email:    document.getElementById('login-email').value,
+    password: document.getElementById('login-password').value,
+  });
+
+  setLoading('login-btn', false);
+
+  if (!res.success) return showAlert('auth-alert', res.message);
+
+  currentUser = res.user;
+  enterDashboard();
+}
+
+// ── REGISTER ──────────────────────────────────────────────
+async function handleRegister(e) {
+  e.preventDefault();
+  hideAlert('auth-alert');
+  setLoading('reg-btn', true);
+
+  const res = await post(API_AUTH, {
+    action:   'register',
+    fullname: document.getElementById('reg-name').value,
+    email:    document.getElementById('reg-email').value,
+    password: document.getElementById('reg-password').value,
+  });
+
+  setLoading('reg-btn', false);
+
+  if (!res.success) return showAlert('auth-alert', res.message);
+
+  showAlert('auth-alert', res.message, 'success');
+  document.getElementById('register-form').reset();
+  setTimeout(() => switchTab('login'), 1500);
+}
+
+// ── LOGOUT ────────────────────────────────────────────────
+async function handleLogout() {
+  await post(API_AUTH, { action: 'logout' });
+  currentUser = null;
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('login-form').reset();
+}
+
+// ── ENTER DASHBOARD ───────────────────────────────────────
+function enterDashboard() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('dashboard').classList.add('visible');
+
+  const initials = currentUser.fullname.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('user-avatar').textContent        = initials;
+  document.getElementById('user-name-display').textContent  = currentUser.fullname;
+
+  loadProducts();
+}
+
+// ── LOAD PRODUCTS ─────────────────────────────────────────
+async function loadProducts() {
+  const search = document.getElementById('search-input').value;
+  const cat    = document.getElementById('cat-filter').value;
+
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (cat)    params.set('category', cat);
+
+  const res = await get(API_PRODUCTS + (params.toString() ? '?' + params : ''));
+
+  if (!res.success) return;
+
+  // Stats
+  document.getElementById('stat-total').textContent = res.stats.total ?? 0;
+  document.getElementById('stat-qty').textContent   = res.stats.totalQty ?? 0;
+  document.getElementById('stat-value').textContent = '₱' + Number(res.stats.totalValue ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+
+  // Rows
+  const tbody = document.getElementById('products-tbody');
+  if (!res.products.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No products found. Add your first product!</td></tr>';
+    return;
+  }
+
+  const catColors = {
+    'Electronics':      'blue',
+    'Clothing':         'purple',
+    'Food & Beverage':  'green',
+    'Office Supplies':  'yellow',
+    'Tools & Hardware': 'red',
+    'Health & Beauty':  'green',
+    'Other':            'yellow',
+  };
+
+  tbody.innerHTML = res.products.map((p, i) => {
+    const qtyClass = p.quantity === 0 ? 'qty-zero' : p.quantity < 5 ? 'qty-low' : 'qty-ok';
+    const cat      = catColors[p.category] || 'blue';
+    const total    = (p.price * p.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+    const price    = Number(p.price).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+    return `
+      <tr>
+        <td style="color:var(--muted);font-size:12px">${i + 1}</td>
+        <td>
+          <strong>${escHtml(p.name)}</strong>
+          ${p.description ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${escHtml(p.description.slice(0,60))}${p.description.length > 60 ? '…' : ''}</div>` : ''}
+        </td>
+        <td><span class="badge badge-${cat}">${escHtml(p.category)}</span></td>
+        <td><span class="qty-badge ${qtyClass}">${p.quantity}</span></td>
+        <td>₱${price}</td>
+        <td style="font-weight:600">₱${total}</td>
+        <td>
+          <div class="action-row">
+            <button class="btn btn-sm btn-outline" onclick='editProduct(${JSON.stringify(p)})'>Edit</button>
+            <button class="btn btn-sm btn-red"     onclick="deleteProduct(${p.id}, '${escHtml(p.name)}')">Delete</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// ── MODAL ─────────────────────────────────────────────────
+function openModal(product = null) {
+  document.getElementById('modal-title').textContent = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('p-id').value       = product?.id       ?? '';
+  document.getElementById('p-name').value     = product?.name     ?? '';
+  document.getElementById('p-category').value = product?.category ?? '';
+  document.getElementById('p-qty').value      = product?.quantity ?? 0;
+  document.getElementById('p-price').value    = product?.price    ?? '0.00';
+  document.getElementById('p-desc').value     = product?.description ?? '';
+  hideAlert('modal-alert');
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function editProduct(p) { openModal(p); }
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+// ── SAVE PRODUCT ──────────────────────────────────────────
+async function handleSaveProduct(e) {
+  e.preventDefault();
+  hideAlert('modal-alert');
+  setLoading('save-btn', true);
+
+  const id = document.getElementById('p-id').value;
+  const body = {
+    name:        document.getElementById('p-name').value,
+    category:    document.getElementById('p-category').value,
+    quantity:    document.getElementById('p-qty').value,
+    price:       document.getElementById('p-price').value,
+    description: document.getElementById('p-desc').value,
+  };
+  if (id) body.id = id;
+
+  const method = id ? 'PUT' : 'POST';
+  const res = await request(API_PRODUCTS, method, body);
+
+  setLoading('save-btn', false);
+
+  if (!res.success) return showAlert('modal-alert', res.message);
+
+  closeModal();
+  showToast(res.message);
+  loadProducts();
+}
+
+// ── DELETE PRODUCT ────────────────────────────────────────
+async function deleteProduct(id, name) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  const res = await request(API_PRODUCTS, 'DELETE', { id });
+  if (res.success) { showToast(res.message); loadProducts(); }
+  else showToast(res.message, true);
+}
+
+// ── HTTP HELPERS ──────────────────────────────────────────
+async function get(url) {
+  try {
+    const r = await fetch(url, { credentials: 'include' });
+    return await r.json();
+  } catch { return { success: false, message: 'Network error.' }; }
+}
+
+async function post(url, data) {
+  return request(url, 'POST', data);
+}
+
+async function request(url, method, data) {
+  try {
+    const r = await fetch(url, {
+      method,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return await r.json();
+  } catch { return { success: false, message: 'Network error.' }; }
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
